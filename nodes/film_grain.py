@@ -57,9 +57,11 @@ class BILDFilmGrain:
                         "tooltip": "How much of the grain is chromatic (color noise). 0 = pure luminance noise, 1 = full color noise.",
                     },
                 ),
+            },
+            "optional": {
                 "seed": (
                     "INT",
-                    {"default": 0, "min": 0, "max": 0xFFFFFFFF, "step": 1},
+                    {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1, "tooltip": "Leave at 0 for random."},
                 ),
             }
         }
@@ -72,7 +74,10 @@ class BILDFilmGrain:
         "Grain is stronger in shadows, weaker in highlights, matching real sensor behavior."
     )
 
-    def apply(self, image: torch.Tensor, amount: float, size: float, color_amount: float, seed: int):
+    def apply(self, image: torch.Tensor, amount: float, size: float, color_amount: float, seed: int = 0):
+        import random as _rand
+        if seed == 0:
+            seed = _rand.randint(1, 2**62)
         if amount <= 0:
             return (image,)
 

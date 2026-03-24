@@ -135,7 +135,9 @@ class BILDFilmGrainSimple:
                         "tooltip": "luminance: same noise on R,G,B (neutral grain). rgb: independent per channel (color speckle).",
                     },
                 ),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFF, "step": 1}),
+            },
+            "optional": {
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF, "step": 1, "tooltip": "Leave at 0 for random."}),
             }
         }
 
@@ -147,7 +149,10 @@ class BILDFilmGrainSimple:
         "RGB mode decorrelates channels for stronger color noise."
     )
 
-    def apply(self, image: torch.Tensor, strength: float, grain_type: str, seed: int):
+    def apply(self, image: torch.Tensor, strength: float, grain_type: str, seed: int = 0):
+        import random as _rand
+        if seed == 0:
+            seed = _rand.randint(1, 2**62)
         if strength <= 0:
             return (image,)
         gen = torch.Generator(device=image.device)
