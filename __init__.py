@@ -23,6 +23,9 @@ from .nodes.post_processing import (
     BILDGamma,
 )
 
+# ── Transform nodes ─────────────────────────────────────────────────
+from .nodes.rotate_crop import BILDRotateCrop
+
 # ── iPhone Authenticate nodes ────────────────────────────────────────
 from .nodes.auto_white_balance import BILDAutoWhiteBalance
 from .nodes.lens_effects import BILDLensEffects
@@ -49,6 +52,8 @@ NODE_CLASS_MAPPINGS = {
     "BILDSaturation": BILDSaturation,
     "BILDUnsharpMask": BILDUnsharpMask,
     "BILDGamma": BILDGamma,
+    # Transform
+    "BILDRotateCrop": BILDRotateCrop,
     # iPhone Authenticate
     "BILDAutoWhiteBalance": BILDAutoWhiteBalance,
     "BILDLensEffects": BILDLensEffects,
@@ -74,6 +79,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BILDSaturation": "BILD Saturation",
     "BILDUnsharpMask": "BILD Unsharp Mask",
     "BILDGamma": "BILD Gamma",
+    # Transform
+    "BILDRotateCrop": "BILD Rotate & Crop",
     # iPhone Authenticate
     "BILDAutoWhiteBalance": "BILD Auto White Balance",
     "BILDLensEffects": "BILD Lens Effects",
