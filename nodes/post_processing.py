@@ -10,6 +10,7 @@ Nodes:
 - BILDUnsharpMask: High-frequency sharpening boost
 - BILDGamma: Power-curve gamma adjustment
 - BILDFilmGrainSimple: Basic additive Gaussian film grain (luminance or RGB)
+- BILDFilmGrainFast: GPU-accelerated colored film grain with saturation blend
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from typing import Literal
 
 import torch
 import torch.nn.functional as F
+import comfy.model_management
 
 from ..utils.tensor_ops import (
     bhwc_to_bchw,
@@ -380,3 +382,126 @@ class BILDGamma:
     def apply(self, image: torch.Tensor, gamma: float):
         gamma = max(0.1, float(gamma))
         return (clamp01(image**gamma),)
+
+
+class BILDFilmGrainFast:
+    """GPU-accelerated colored film grain with per-channel control and batch chunking."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "image": ("IMAGE",),
+                "grain_intensity": (
+                    "FLOAT",
+                    {
+                        "default": 0.04,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.001,
+                        "tooltip": "Amplitude of additive noise (typical 0.01–0.10).",
+                    },
+                ),
+                "saturation_mix": (
+                    "FLOAT",
+                    {
+                        "default": 0.5,
+                        "min": 0.0,
+                        "max": 1.0,
+                        "step": 0.01,
+                        "tooltip": "0.0 = monochrome grain, 1.0 = fully colored grain.",
+                    },
+                ),
+                "red_scale": (
+                    "FLOAT",
+                    {
+                        "default": 2.0,
+                        "min": 0.0,
+                        "max": 5.0,
+                        "step": 0.1,
+                        "tooltip": "Noise multiplier for the red channel (higher = more red speckle).",
+                    },
+                ),
+                "blue_scale": (
+                    "FLOAT",
+                    {
+                        "default": 3.0,
+                        "min": 0.0,
+                        "max": 5.0,
+                        "step": 0.1,
+                        "tooltip": "Noise multiplier for the blue channel (higher = more blue speckle).",
+                    },
+                ),
+                "batch_size": (
+                    "INT",
+                    {
+                        "default": 4,
+                        "min": 1,
+                        "max": 500,
+                        "step": 1,
+                        "tooltip": "Frames processed per GPU chunk (lower = less VRAM, useful for video batches).",
+                    },
+                ),
+            },
+            "optional": {
+                "seed": (
+                    "INT",
+                    {
+                        "default": 0,
+                        "min": 0,
+                        "max": 0xFFFFFFFFFFFFFFFF,
+                        "step": 1,
+                        "tooltip": "Leave at 0 for random grain each run.",
+                    },
+                ),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    FUNCTION = "apply"
+    CATEGORY = "BILD/VizionPipeline"
+    DESCRIPTION = (
+        "GPU-accelerated film grain with tunable color character. "
+        "Red/blue channel scaling mimics real film stock sensitivity; "
+        "saturation_mix blends between monochrome and colored noise."
+    )
+
+    def apply(
+        self,
+        image: torch.Tensor,
+        grain_intensity: float,
+        saturation_mix: float,
+        red_scale: float,
+        blue_scale: float,
+        batch_size: int,
+        seed: int = 0,
+    ):
+        if grain_intensity <= 0:
+            return (image,)
+
+        import random as _rand
+        if seed == 0:
+            seed = _rand.randint(1, 2**62)
+
+        device = comfy.model_management.get_torch_device()
+        image = image.to(device)
+
+        gen = torch.Generator(device=device)
+        gen.manual_seed(int(seed) % (2**31))
+
+        outputs = []
+        for i in range(0, image.shape[0], batch_size):
+            batch = image[i : i + batch_size]
+            grain = torch.randn(batch.shape, generator=gen, device=device, dtype=batch.dtype)
+
+            grain[:, :, :, 0] *= red_scale
+            grain[:, :, :, 2] *= blue_scale
+
+            gray = grain[:, :, :, 1].unsqueeze(3).expand_as(grain)
+            grain = saturation_mix * grain + (1.0 - saturation_mix) * gray
+
+            output = (batch + grain * grain_intensity).clamp(0.0, 1.0)
+            outputs.append(output)
+
+        result = torch.cat(outputs, dim=0)
+        return (result.to(comfy.model_management.intermediate_device()),)

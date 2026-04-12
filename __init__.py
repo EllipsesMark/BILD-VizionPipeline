@@ -15,6 +15,7 @@ from .nodes.lora_batch import (
 from .nodes.post_processing import (
     BILDMotionBlur,
     BILDFilmGrainSimple,
+    BILDFilmGrainFast,
     BILDBrightnessContrast,
     BILDGaussianBlur,
     BILDVignette,
@@ -46,6 +47,7 @@ NODE_CLASS_MAPPINGS = {
     # Post-processing
     "BILDMotionBlur": BILDMotionBlur,
     "BILDFilmGrainSimple": BILDFilmGrainSimple,
+    "BILDFilmGrainFast": BILDFilmGrainFast,
     "BILDBrightnessContrast": BILDBrightnessContrast,
     "BILDGaussianBlur": BILDGaussianBlur,
     "BILDVignette": BILDVignette,
@@ -73,6 +75,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     # Post-processing
     "BILDMotionBlur": "BILD Motion Blur",
     "BILDFilmGrainSimple": "BILD Film Grain (Simple)",
+    "BILDFilmGrainFast": "BILD Film Grain (Fast)",
     "BILDBrightnessContrast": "BILD Brightness & Contrast",
     "BILDGaussianBlur": "BILD Gaussian Blur",
     "BILDVignette": "BILD Vignette",
