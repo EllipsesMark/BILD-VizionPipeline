@@ -36,6 +36,7 @@ from .nodes.deep_fusion import BILDDeepFusion
 from .nodes.compression import BILDCompressionArtifacts
 from .nodes.film_grain import BILDFilmGrain
 from .nodes.metadata_inject import BILDMetadataInject
+from .nodes.metadata_strip import BILDMetadataStrip, BILDMetadataStripFile
 from .nodes.authenticate_all import BILDAuthenticateAll
 
 # ── Registration ─────────────────────────────────────────────────────
@@ -65,6 +66,8 @@ NODE_CLASS_MAPPINGS = {
     "BILDCompressionArtifacts": BILDCompressionArtifacts,
     "BILDFilmGrain": BILDFilmGrain,
     "BILDMetadataInject": BILDMetadataInject,
+    "BILDMetadataStrip": BILDMetadataStrip,
+    "BILDMetadataStripFile": BILDMetadataStripFile,
     "BILDAuthenticateAll": BILDAuthenticateAll,
 }
 
@@ -93,6 +96,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BILDCompressionArtifacts": "BILD Compression Artifacts",
     "BILDFilmGrain": "BILD Film Grain",
     "BILDMetadataInject": "BILD Metadata Inject",
+    "BILDMetadataStrip": "BILD Metadata Strip",
+    "BILDMetadataStripFile": "BILD Metadata Strip (File)",
     "BILDAuthenticateAll": "BILD Authenticate All",
 }
 
